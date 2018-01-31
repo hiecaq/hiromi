@@ -11,7 +11,7 @@
 
 import pytest
 
-from hiromi.bgmal.bgm import Bangumi, Bgmanime, LoginFailedException
+from bgmal.bgm import Bangumi, Bgmanime, LoginFailedException
 
 
 @pytest.mark.usefixtures("mock_bgm")

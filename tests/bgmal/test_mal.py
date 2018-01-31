@@ -11,7 +11,7 @@
 
 import pytest
 
-from hiromi.bgmal.mal import MyAnimeList, IllegalPasswordException
+from bgmal.mal import MyAnimeList, IllegalPasswordException
 
 
 @pytest.mark.usefixtures("mock_mal")
