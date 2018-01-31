@@ -70,9 +70,19 @@ def parse_args(argv):
         type=str,
         default=None
     )
+    parser.add_argument(
+        '-V',
+        '--version', help='Show version and exit.', action='store_true',
+        default=False
+    )
+
     if len(argv) == 0:
         parser.print_help()
+        sys.exit(1)
+
     args = vars(parser.parse_args(argv))
+    if args['version']:
+        args['func'] = lambda _: print(__version__)
     return args
 
 
