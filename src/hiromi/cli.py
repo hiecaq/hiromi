@@ -70,6 +70,8 @@ def parse_args(argv):
         type=str,
         default=None
     )
+    if len(argv) == 0:
+        parser.print_help()
     args = vars(parser.parse_args(argv))
     return args
 
@@ -120,7 +122,8 @@ def immigrate(args):
 
 def main():
     args = parse_args(sys.argv[1:])
-    args['func'](args)
+    if 'func' in args:
+        args['func'](args)
 
 
 if __name__ == "__main__":
