@@ -32,17 +32,21 @@ def parse_args(argv):
 
     """
     parser = argparse.ArgumentParser(
-        description="Immigrate watched list from bangumi to MyAnimeList",
-        allow_abbrev=False
+        description="Command line anime tracker.", allow_abbrev=False
     )
-    acts = parser.add_mutually_exclusive_group(required=True)
+    subparsers = parser.add_subparsers()
+    parser_immigrate = subparsers.add_parser(
+        'immigrate', help="Immigrate watched list from bangumi to MyAnimeList"
+    )
+    parser_immigrate.set_defaults(func=immigrate)
+    acts = parser_immigrate.add_mutually_exclusive_group(required=True)
     acts.add_argument(
         '--bgm2mal', help="Immigrate from bgm to mal", action="store_true"
     )
     acts.add_argument(
         '--mal2bgm', help="Immigrate from mal to bgm", action="store_true"
     )
-    parser.add_argument(
+    parser_immigrate.add_argument(
         '-f',
         '--file',
         metavar="JSON",
@@ -50,7 +54,7 @@ def parse_args(argv):
         type=str,
         default="config.json"
     )
-    parser.add_argument(
+    parser_immigrate.add_argument(
         '-o',
         '--output',
         metavar="SAVEFILE",
@@ -58,7 +62,7 @@ def parse_args(argv):
         type=str,
         default="save.json"
     )
-    parser.add_argument(
+    parser_immigrate.add_argument(
         '-i',
         '--input',
         metavar="SAVEFILE",
@@ -72,15 +76,14 @@ def parse_args(argv):
 
 def load_config(filename):
     with open(filename) as f:
-        config = json.loads(f)
+        config = json.loads(f.read())
 
     a = MyAnimeList(config['mal']['account'], config['mal']['password'])
     b = Bangumi(config['bgm']['account'], config['bgm']['password'])
     return a, b
 
 
-def main():
-    args = parse_args(sys.argv[1:])
+def immigrate(args):
     if args['bgm2mal']:
         dst, src = load_config(args['file'])
     else:
@@ -113,6 +116,11 @@ def main():
 
     with open(args['output']) as f:
         f.write(json.dumps(fail))
+
+
+def main():
+    args = parse_args(sys.argv[1:])
+    args['func'](args)
 
 
 if __name__ == "__main__":
