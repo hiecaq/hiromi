@@ -18,6 +18,8 @@ from functools import lru_cache
 import requests
 from bs4 import BeautifulSoup
 
+from hiromi.cache import period_cache
+
 from .api import AnimeItem, AnimeWebsite, LoginFailedException
 
 logger = logging.getLogger(__name__)
@@ -104,6 +106,7 @@ class MyAnimeList(AnimeWebsite):
             username = soup.find('username').string
             return username
 
+    @period_cache("mal", period=3600)
     def watched_list(self):
         """Return the watched list of anime
 
@@ -131,13 +134,16 @@ class MyAnimeList(AnimeWebsite):
         data = json.loads(items)
         return [
             AnimeItem(
-                title=_get_info(
-                    'https://myanimelist.net' + entry['anime_url'], 'Japanese'
-                ),
+                title=entry['anime_title'],
+                score=None,
+                #  title=_get_info(
+                #      'https://myanimelist.net' + entry['anime_url'],
+                #      'Japanese'
+                #  ),
+                #  score=_get_score(
+                #      'https://myanimelist.net' + entry['anime_url']
+                #  ),
                 userscore=entry['score'],
-                score=_get_score(
-                    'https://myanimelist.net' + entry['anime_url']
-                ),
                 episode=entry['anime_num_episodes'],
                 status=entry['num_watched_episodes']
             ) for entry in data

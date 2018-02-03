@@ -12,6 +12,7 @@
 import argparse
 import logging
 import sys
+import colorama
 
 from pkg_resources import get_distribution
 
@@ -55,9 +56,11 @@ def parse_args(argv):
 
 
 def main():
+    colorama.init()
     args = parse_args(sys.argv[1:])
     if 'func' in args:
         args['func'](args)
+    colorama.deinit()
 
 
 if __name__ == "__main__":

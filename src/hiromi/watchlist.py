@@ -10,6 +10,8 @@
 """
 
 from .config import ConfigManager
+import json
+from colorama import Fore, Style
 
 
 def add_parser_list(subparsers):
@@ -41,14 +43,6 @@ def add_parser_list(subparsers):
         type=str,
         default="save.json"
     )
-    parser_list.add_argument(
-        '-i',
-        '--input',
-        metavar="SAVEFILE",
-        help="Read the previous failed AnimeItem file.",
-        type=str,
-        default=None
-    )
 
 
 def watchlist(args):
@@ -60,5 +54,7 @@ def watchlist(args):
     """
     src = ConfigManager(args['file']).load_config(args['target'])
 
-    for anime in src.watched_list():
-        print(anime)
+    watchlist = src.watched_list()
+    for item in watchlist:
+        print(f"{Fore.GREEN}{item.title:\u3000<20}{Style.RESET_ALL}"
+              f"{item.status}/{item.episode}\t{Fore.RED}{item.userscore}{Style.RESET_ALL} ({item.score})")

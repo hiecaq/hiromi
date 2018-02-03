@@ -16,6 +16,8 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
+from hiromi.cache import period_cache
+
 from .api import AnimeItem, AnimeWebsite, LoginFailedException
 
 logger = logging.getLogger(__name__)
@@ -52,6 +54,7 @@ class Bangumi(AnimeWebsite):
             logger.error("logging failed: %s", e)
             raise LoginFailedException()
 
+    @period_cache("bgm", period=3600)
     def watched_list(self):
         """Return the watched list of anime
 

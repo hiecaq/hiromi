@@ -27,7 +27,8 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=[
-        'beautifulsoup4==4.6.0', 'lxml==4.1.1', 'requests==2.18.4'
+        'beautifulsoup4==4.6.0', 'lxml==4.1.1', 'requests==2.18.4',
+        'colorama==0.3.9'
     ],
     python_requires='>=3.6, <4',
     setup_requires=['setuptools_scm'],
