@@ -13,6 +13,7 @@ import json
 import logging
 import re
 import time
+from functools import lru_cache
 
 import requests
 from bs4 import BeautifulSoup
@@ -115,13 +116,30 @@ class MyAnimeList(AnimeWebsite):
         )
         r.raise_for_status()
         soup = BeautifulSoup(r.content, 'lxml')
+        try:
+            items = soup.find(class_='list-table')['data-items']
+        except Exception as e:
+            print(e)
+            time.sleep(5)
+            r = requests.get(
+                "https://myanimelist.net/animelist"
+                "/{0}?status=2".format(self.username)
+            )
+            r.raise_for_status()
+
         items = soup.find(class_='list-table')['data-items']
         data = json.loads(items)
         return [
             AnimeItem(
-                title=entry['anime_title'],
+                title=_get_info(
+                    'https://myanimelist.net' + entry['anime_url'], 'Japanese'
+                ),
                 userscore=entry['score'],
-                score=None
+                score=_get_score(
+                    'https://myanimelist.net' + entry['anime_url']
+                ),
+                episode=entry['anime_num_episodes'],
+                status=entry['num_watched_episodes']
             ) for entry in data
         ]
 
@@ -135,41 +153,11 @@ class MyAnimeList(AnimeWebsite):
         """
         item = _search(title)
         return AnimeItem(
-            title=MyAnimeList._get_info(item['url'], 'Japanese'),
+            title=_get_info(item['url'], 'Japanese'),
             score=float(item['payload']['score']),
-            userscore=None
-        )
-
-    @classmethod
-    def _get_info(cls, url, information):
-        """Get the japanese name of the anime in this url.
-
-        :param str url: The given url of this anime.
-        :returns: the name of this anime.
-        :rtype: str
-
-        """
-
-        def is_target(x):
-            target = x.find('span', class_='dark_text')
-            return target is not None and target.string == information + ":"
-
-        time.sleep(0.5)
-
-        r = requests.get(url)
-        r.raise_for_status()
-        soup = BeautifulSoup(r.content, "lxml")
-        info = list(
-            filter(
-                is_target,
-                soup.find_all('div', class_=re.compile('spaceit(_pad)?'))
-            )
-        )
-        return (
-            info[-1].contents[-1].strip() if len(info) > 0 else
-            soup.find('span', attrs={
-                'itemprop': 'name'
-            }).string
+            userscore=None,
+            episode=int(_get_info(item['url'], 'Episodes')),
+            status=None
         )
 
     def mark_as_watched(self, anime_item):
@@ -189,7 +177,7 @@ class MyAnimeList(AnimeWebsite):
             item['id']
         )
         try:
-            episode = int(MyAnimeList._get_info(item['url'], 'Episodes'))
+            episode = int(_get_info(item['url'], 'Episodes'))
         except ValueError as e:
             return False
         r = requests.get(
@@ -208,3 +196,60 @@ class MyAnimeList(AnimeWebsite):
             return True
 
         return False
+
+
+@lru_cache(maxsize=3)
+def _get_page(url):
+    """Get the japanese name of the anime in this url.
+
+    :param str url: The given url of this anime.
+    :returns: the name of this anime.
+    :rtype: str
+
+    """
+
+    time.sleep(0.5)
+
+    r = requests.get(url)
+    r.raise_for_status()
+    soup = BeautifulSoup(r.content, "lxml")
+    return soup
+
+
+def _get_score(url):
+    soup = _get_page(url)
+    return float(
+        soup.find('div', attrs={
+            'data-title': 'score'
+        }).string.strip()
+    )
+
+
+def _get_info(url, information):
+    """TODO: Docstring for _get_info.
+
+    :param url: TODO
+    :param information: TODO
+    :returns: TODO
+
+    """
+
+    def is_target(x):
+        target = x.find('span', class_='dark_text')
+        return target is not None and target.string == information + ":"
+
+    soup = _get_page(url)
+
+    info = list(
+        filter(
+            is_target,
+            soup.find_all('div', class_=re.compile('spaceit(_pad)?'))
+        )
+    )
+
+    return (
+        info[-1].contents[-1].strip()
+        if len(info) > 0 else soup.find('span', attrs={
+            'itemprop': 'name'
+        }).string
+    )

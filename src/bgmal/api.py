@@ -69,5 +69,5 @@ class AnimeWebsite(ABC):
 
 
 AnimeItem = collections.namedtuple(
-    'AnimeItem', ['title', 'score', 'userscore']
+    'AnimeItem', ['title', 'score', 'userscore', 'episode', 'status']
 )

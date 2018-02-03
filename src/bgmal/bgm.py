@@ -9,6 +9,7 @@
     :license: MIT, see LICENSE for more details.
 """
 
+import json
 import logging
 import time
 
@@ -77,7 +78,7 @@ class Bangumi(AnimeWebsite):
             soup = BeautifulSoup(r.content, 'lxml')
             items = soup.find_all('li', class_='item')
             for item in items:
-                watched.append(Bgmanime(item))
+                watched.append(self._bgmanime(item))
             if not has_next_page(soup):
                 break
             page += 1
@@ -121,7 +122,9 @@ class Bangumi(AnimeWebsite):
             :rtype: AnimeItem
 
             """
-            return AnimeItem(raw['name'], raw['rating']['score'], None)
+            return AnimeItem(
+                raw['name'], raw['rating']['score'], None, raw['eps'], None
+            )
 
         return raw_to_AnimeItem(
             next((raw for raw in get_raw_result() if raw['type'] == 2), None)
@@ -140,32 +143,58 @@ class Bangumi(AnimeWebsite):
         # TODO
         return False
 
+    def _bgmanime(self, item):
+        """Build an AnimeItem with the given soup."""
 
-def Bgmanime(item):
-    """Build an AnimeItem with the given soup."""
+        def score():
+            """Return the user's score of this anime
+            :returns: score
+            :rtype: int
 
-    def score():
-        """Return the user's score of this anime
-        :returns: score
-        :rtype: int
+            """
+            starsinfo = item.find(class_='starsinfo')['class']
+            stars = (
+                starsinfo[0] if starsinfo[0] != 'starsinfo' else starsinfo[-1]
+            )
+            return int(stars[6:])
 
-        """
-        starsinfo = item.find(class_='starsinfo')['class']
-        stars = (
-            starsinfo[0] if starsinfo[0] != 'starsinfo' else starsinfo[-1]
-        )
-        return int(stars[6:])
+        def title():
+            """Return the title of this anime
+            :returns: title of this anime
+            :rtype: str
 
-    def title():
-        """Return the title of this anime
-        :returns: title of this anime
-        :rtype: str
+            """
+            return (
+                item.find(class_='grey').string
+                if item.find(class_='grey') is not None else
+                item.find(class_='l').string
+            )
 
-        """
-        return (
-            item.find(class_='grey').string
-            if item.find(class_='grey') is not None else
-            item.find(class_='l').string
-        )
+        def episodes():
+            """TODO: Docstring for episodes.
+            :returns: TODO
 
-    return AnimeItem(title(), None, score())
+            """
+            URL = (
+                "https://api.bgm.tv/subject/{0}".format(
+                    item['id'].split('_')[-1]
+                )
+            )
+            r = requests.get(
+                URL,
+                params={
+                    'responseGroup': 'simple',
+                    'source': 'onAir',
+                    'auth': self._auth
+                }
+            )
+            r.raise_for_status()
+            data = json.loads(r.text)
+            episode = data['eps'] if data['eps'] != 0 else 1
+            return {
+                'episode': episode,
+                'status': episode,
+                'score': data['rating']['score']
+            }
+
+        return AnimeItem(title=title(), userscore=score(), **episodes())
