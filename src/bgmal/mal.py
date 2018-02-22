@@ -164,7 +164,8 @@ class MyAnimeList(AnimeWebsite):
                 #  ),
                 userscore=entry['score'],
                 episode=entry['anime_num_episodes'],
-                status=entry['num_watched_episodes']
+                status=entry['num_watched_episodes'],
+                id=entry['anime_id']
             ) for entry in data
         ]
 
@@ -177,12 +178,14 @@ class MyAnimeList(AnimeWebsite):
 
         """
         item = _search(title)
+        return item
         return AnimeItem(
             title=_get_info(item['url'], 'Japanese'),
             score=float(item['payload']['score']),
             userscore=None,
             episode=int(_get_info(item['url'], 'Episodes')),
-            status=None
+            status=None,
+            id=item['id']
         )
 
     def mark_as_watched(self, anime_item):

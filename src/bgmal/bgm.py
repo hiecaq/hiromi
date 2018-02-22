@@ -61,8 +61,11 @@ class Bangumi(AnimeWebsite):
         )
         r.raise_for_status()
         data = json.loads(r.text)
-        return [AnimeItem(status=item['ep_status'], episode=item['subject']['eps'],
-                          userscore=None, score=None, title=item['subject']['name'])
+        return [AnimeItem(status=item['ep_status'],
+                          episode=item['subject']['eps'],
+                          userscore=None, score=None,
+                          id=item['subject']['id'],
+                          title=item['subject']['name'])
                 for item in data]
 
     @period_cache("bgm", period=3600)
@@ -137,7 +140,8 @@ class Bangumi(AnimeWebsite):
 
             """
             return AnimeItem(
-                raw['name'], raw['rating']['score'], None, raw['eps'], None
+                raw['name'], raw['rating']['score'], None, raw['eps'], None,
+                raw['id']
             )
 
         return raw_to_AnimeItem(
@@ -208,7 +212,8 @@ class Bangumi(AnimeWebsite):
             return {
                 'episode': episode,
                 'status': episode,
-                'score': data['rating']['score']
+                'score': data['rating']['score'],
+                'id': data['id']
             }
 
         return AnimeItem(title=title(), userscore=score(), **episodes())
