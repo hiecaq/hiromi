@@ -54,6 +54,17 @@ class Bangumi(AnimeWebsite):
             logger.error("logging failed: %s", e)
             raise LoginFailedException()
 
+    def watching_list(self):
+        r = requests.get(
+            "https://api.bgm.tv/user/"
+            "{0}/collection?cat=watching".format(self._uid)
+        )
+        r.raise_for_status()
+        data = json.loads(r.text)
+        return [AnimeItem(status=item['ep_status'], episode=item['subject']['eps'],
+                          userscore=None, score=None, title=item['subject']['name'])
+                for item in data]
+
     @period_cache("bgm", period=3600)
     def watched_list(self):
         """Return the watched list of anime

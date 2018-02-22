@@ -43,6 +43,15 @@ class AnimeWebsite(ABC):
         pass
 
     @abstractmethod
+    def watching_list(self):
+        """Return the watching list of anime
+
+        :returns: A list of dict, with field str `title` and int `score`
+
+        """
+        pass
+
+    @abstractmethod
     def search(self, title):
         """Return an ``AnimeItem`` object representing the anime entry
         of this search result.

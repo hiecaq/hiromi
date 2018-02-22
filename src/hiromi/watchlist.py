@@ -43,6 +43,11 @@ def add_parser_list(subparsers):
         type=str,
         default="save.json"
     )
+    parser_list.add_argument(
+        '--finished',
+        help="Show the watched collection",
+        action="store_true"
+    )
 
 
 def watchlist(args):
@@ -54,7 +59,8 @@ def watchlist(args):
     """
     src = ConfigManager(args['file']).load_config(args['target'])
 
-    watchlist = src.watched_list()
+    watchlist = src.watched_list() if args['finished'] else src.watching_list()
     for item in watchlist:
         print(f"{Fore.GREEN}{item.title:\u3000<20}{Style.RESET_ALL}"
-              f"{item.status}/{item.episode}\t{Fore.RED}{item.userscore}{Style.RESET_ALL} ({item.score})")
+              f"{item.status}/{item.episode}\t{Fore.RED}"
+              f"{item.userscore}{Style.RESET_ALL} ({item.score})")

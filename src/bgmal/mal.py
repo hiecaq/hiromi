@@ -28,7 +28,7 @@ ANIME_VALUES = """\
 <?xml version="1.0" encoding="UTF-8"?>
 <entry>
 <episode>{episode}</episode>
-<status>2</status>
+<status>{status}</status>
 <score>{userscore}</score>
 <storage_type></storage_type>
 <storage_value></storage_value>
@@ -113,9 +113,28 @@ class MyAnimeList(AnimeWebsite):
         :returns: a list of anime entries, described in dict of name and score
 
         """
+        return self._get_list(2)
+
+    def watching_list(self):
+        """Return the watching list of anime
+
+        :returns: a list of anime entries, described in dict of name and score
+
+        """
+        return self._get_list(1)
+
+    def _get_list(self, status):
+        """Return the list of anime for given status
+
+        :param int status: the status of this list, 2 for completed and 1 for
+                            current watching
+
+        :returns: a list of anime entries, described in dict of name and score
+
+        """
         r = requests.get(
             "https://myanimelist.net/animelist"
-            "/{0}?status=2".format(self.username)
+            "/{0}?status={1}".format(self.username, status)
         )
         r.raise_for_status()
         soup = BeautifulSoup(r.content, 'lxml')
@@ -192,7 +211,8 @@ class MyAnimeList(AnimeWebsite):
             params={
                 'data':
                     ANIME_VALUES.format(
-                        episode=episode, userscore=anime_item.userscore
+                        episode=episode, userscore=anime_item.userscore,
+                        status=2
                     )
             }
         )
