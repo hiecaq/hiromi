@@ -61,12 +61,18 @@ class Bangumi(AnimeWebsite):
         )
         r.raise_for_status()
         data = json.loads(r.text)
-        return [AnimeItem(status=item['ep_status'],
-                          episode=item['subject']['eps'],
-                          userscore=None, score=None,
-                          id=item['subject']['id'],
-                          title=item['subject']['name'])
-                for item in data]
+        return [
+            AnimeItem(
+                status=item['ep_status'],
+                episode=(
+                    item['subject']['eps'] if 'eps' in item['subject'] else 13
+                ),
+                userscore=None,
+                score=None,
+                id=item['subject']['id'],
+                title=item['subject']['name']
+            ) for item in data
+        ]
 
     @period_cache("bgm", period=3600)
     def watched_list(self):

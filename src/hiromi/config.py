@@ -58,17 +58,24 @@ class ConfigManager(object):
         :rtype: AnimeWebsite
 
         """
-        target = to_symbol(target)
-        if target == "bgm":
-            result = Bangumi(
+
+        def new_bgm():
+            return Bangumi(
                 self._config['bgm']['account'], self._config['bgm']['password']
             )
-        elif target == "mal":
-            result = MyAnimeList(
+
+        def new_mal():
+            return MyAnimeList(
                 self._config['mal']['account'], self._config['mal']['password']
             )
+
+        target = to_symbol(target)
+        if target == "bgm":
+            result = new_bgm()
+        elif target == "mal":
+            result = new_mal()
         else:
-            result = Hiromi()
+            result = Hiromi(new_bgm, new_mal)
 
         return result
 

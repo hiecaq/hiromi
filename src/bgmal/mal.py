@@ -49,7 +49,7 @@ class IllegalPasswordException(Exception):
     pass
 
 
-def _search(title):
+def _search(title, test=None):
     """Search and return an ``AnimeItem`` object representing the result.
 
     :param str title: the title user wish to search.
@@ -66,7 +66,7 @@ def _search(title):
     r.raise_for_status()
     data = json.loads(r.text)
     # assume the first one is the closest result
-    return data['categories'][0]['items'][0]
+    return next(filter(test, data['categories'][0]['items']))
 
 
 class MyAnimeList(AnimeWebsite):
@@ -169,7 +169,7 @@ class MyAnimeList(AnimeWebsite):
             ) for entry in data
         ]
 
-    def search(self, title):
+    def search(self, title, test=None):
         """Search and return an ``AnimeItem`` object representing the result.
 
         :param str title: the title user wish to search.
@@ -177,8 +177,7 @@ class MyAnimeList(AnimeWebsite):
         :rtype: AnimeItem
 
         """
-        item = _search(title)
-        return item
+        item = _search(title, test=test)
         return AnimeItem(
             title=_get_info(item['url'], 'Japanese'),
             score=float(item['payload']['score']),

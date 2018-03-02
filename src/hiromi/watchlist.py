@@ -9,9 +9,9 @@
     :license: MIT, see LICENSE for more details.
 """
 
-from .config import ConfigManager
-import json
 from colorama import Fore, Style
+
+from .config import ConfigManager
 
 
 def add_parser_list(subparsers):
@@ -44,9 +44,7 @@ def add_parser_list(subparsers):
         default="save.json"
     )
     parser_list.add_argument(
-        '--finished',
-        help="Show the watched collection",
-        action="store_true"
+        '--finished', help="Show the watched collection", action="store_true"
     )
 
 
@@ -61,6 +59,8 @@ def watchlist(args):
 
     watchlist = src.watched_list() if args['finished'] else src.watching_list()
     for item in watchlist:
-        print(f"{Fore.GREEN}{item.title:\u3000<20}{Style.RESET_ALL}"
-              f"{item.status}/{item.episode}\t{Fore.RED}"
-              f"{item.userscore}{Style.RESET_ALL} ({item.score})")
+        print(
+            f"{Fore.GREEN}{item.title:\u3000<20}{Style.RESET_ALL}"
+            f"{item.status}/{item.episode}\t{Fore.RED}"
+            f"{item.userscore}{Style.RESET_ALL} ({item.score})"
+        )
