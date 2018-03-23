@@ -146,8 +146,8 @@ class Bangumi(AnimeWebsite):
 
             """
             return AnimeItem(
-                raw['name'], raw['rating']['score'], None, raw['eps'], None,
-                raw['id']
+                raw['name'], raw['rating']['score'], None, raw['eps']
+                if 'eps' in raw else 1, None, raw['id']
             )
 
         return raw_to_AnimeItem(

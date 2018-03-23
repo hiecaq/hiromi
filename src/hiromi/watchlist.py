@@ -64,3 +64,4 @@ def watchlist(args):
             f"{item.status}/{item.episode}\t{Fore.RED}"
             f"{item.userscore}{Style.RESET_ALL} ({item.score})"
         )
+

@@ -41,7 +41,13 @@ def period_cache(name, period=600):
             else:
                 with open(save_name()) as f:
                     raw = json.loads(f.read())
-                cache = [AnimeItem(*cached) for cached in raw]
+                if type(raw) == list:
+                    cache = [AnimeItem(*cached) for cached in raw]
+                else:
+                    cache = {
+                        site: [AnimeItem(*cached) for cached in raw[site]]
+                        for site in raw
+                    }
             finally:
                 if time() - last_time >= period:
                     cache = func(*args, **kwords)

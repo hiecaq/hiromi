@@ -1,4 +1,8 @@
+import json
+from time import sleep
+
 from bgmal import AnimeItem, AnimeWebsite
+from hiromi.cache import period_cache
 
 
 class Hiromi(AnimeWebsite):
@@ -22,21 +26,50 @@ class Hiromi(AnimeWebsite):
         pass
 
     def watching_list(self):
-        bgm = self._getBgm()
-        mal = self._getMal()
-        animes = bgm.watching_list()
-        return [
-            AnimeItem(
-                anime.title + mal.search(
-                    anime.title, lambda x: abs(x.episode - anime.episode) <= 3
-                ).title,
-                anime.score,
-                anime.userscore,
-                anime.episode,
-                anime.status,
-                anime.id,
-            ) for anime in animes
-        ]
+        @period_cache("local", period=1800)
+        def from_scratch():
+            bgm = self._getBgm()
+            mal = self._getMal()
+            mal_animes = mal.watching_list()
+            bgm_animes = bgm.watching_list()
+            d = {'bgm': [], 'mal': [], 'failed': []}
+            for anime in mal_animes:
+                sleep(5)
+                try:
+                    title = mal.search(anime.title).title
+                    found = next(
+                        filter(
+                            lambda x: x.title[:-2] == title[:-2], bgm_animes
+                        )
+                    )
+                    if found is not None:
+                        d['bgm'].append(found)
+                        d['mal'].append(anime)
+                except Exception as e:
+                    d['failed'].append(anime)
+
+            d['failed'] += set(bgm_animes) - set(d['bgm'])
+
+            return d
+
+        result = from_scratch()
+        failed = result['failed'].copy()
+        for index, bgm_anime in enumerate(result['bgm']):
+            mal_anime = result['mal'][index]
+            failed.append(
+                AnimeItem(
+                    title=f"{bgm_anime.title}({mal_anime.title})",
+                    userscore=bgm_anime.userscore,
+                    episode=mal_anime.episode,
+                    status=bgm_anime.status,
+                    score=bgm_anime.score,
+                    id=bgm_anime.id
+                )
+            )
+        return failed
+
+    def update(self):
+        pass
 
     def search(self, title):
         """Return an ``AnimeItem`` object representing the anime entry
