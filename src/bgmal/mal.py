@@ -213,12 +213,46 @@ class MyAnimeList(AnimeWebsite):
             params={
                 'data':
                     ANIME_VALUES.format(
-                        episode=episode, userscore=anime_item.userscore,
+                        episode=episode,
+                        userscore=anime_item.userscore,
                         status=2
                     )
             }
         )
         # OMG it actually return 400 Client Error if the anime is watched
+        if not r.status_code == 400:
+            r.raise_for_status()
+            return True
+
+        return False
+
+    def increment_status(self, anime_item):
+        """Mark the next episode of this given anime as watched.
+
+        :param AnimeItem anime_item: an AnimeItem that the user want to mark
+                                as watched.
+        :returns: true or false
+        :rtype: bool
+
+        """
+        url = 'https://myanimelist.net/api/animelist/update/{0}.xml'.format(
+            anime_item.id
+        )
+        r = requests.get(
+            url,
+            auth=(self._account, self._password),
+            params={
+                'data':
+                    ANIME_VALUES.format(
+                        episode=anime_item.status + 1,
+                        userscore=(
+                            anime_item.userscore
+                            if anime_item.userscore is not None else ""
+                        ),
+                        status=1
+                    )
+            }
+        )
         if not r.status_code == 400:
             r.raise_for_status()
             return True
@@ -281,3 +315,4 @@ def _get_info(url, information):
             'itemprop': 'name'
         }).string
     )
+

@@ -68,7 +68,19 @@ class AnimeWebsite(ABC):
         """Mark the given anime as watched with the given score, return true
         if this call succeeds.
 
-        :param AnimeItem title: an AnimeItem that the user want to mark
+        :param AnimeItem anime_item: an AnimeItem that the user want to mark
+                                as watched.
+        :returns: true or false
+        :rtype: bool
+
+        """
+        pass
+
+    @abstractmethod
+    def increment_status(self, anime_item):
+        """Mark the next episode of this given anime as watched.
+
+        :param AnimeItem anime_item: an AnimeItem that the user want to mark
                                 as watched.
         :returns: true or false
         :rtype: bool

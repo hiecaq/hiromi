@@ -9,7 +9,6 @@
     :license: MIT, see LICENSE for more details.
 """
 
-import json
 import logging
 import time
 
@@ -60,7 +59,7 @@ class Bangumi(AnimeWebsite):
             "{0}/collection?cat=watching".format(self._uid)
         )
         r.raise_for_status()
-        data = json.loads(r.text)
+        data = r.json()
         return [
             AnimeItem(
                 status=item['ep_status'],
@@ -158,14 +157,13 @@ class Bangumi(AnimeWebsite):
         """Mark the given anime as watched with the given score, return true
         if this call succeeds.
 
-        :param AnimeItem title: an AnimeItem that the user want to mark
+        :param AnimeItem anime_item: an AnimeItem that the user want to mark
                                 as watched.
         :returns: true or false
         :rtype: bool
 
         """
-        # TODO
-        return False
+        pass
 
     def _bgmanime(self, item):
         """Build an AnimeItem with the given soup."""
@@ -213,7 +211,7 @@ class Bangumi(AnimeWebsite):
                 }
             )
             r.raise_for_status()
-            data = json.loads(r.text)
+            data = r.json()
             episode = data['eps'] if data['eps'] != 0 else 1
             return {
                 'episode': episode,
@@ -223,3 +221,55 @@ class Bangumi(AnimeWebsite):
             }
 
         return AnimeItem(title=title(), userscore=score(), **episodes())
+
+    def increment_status(self, anime_item):
+        """Mark the next episode of this given anime as watched.
+
+        :param AnimeItem anime_item: an AnimeItem that the user want to mark
+                                as watched.
+        :returns: true or false
+        :rtype: bool
+
+        """
+
+        def get_all_episodes(anime_id):
+            url = (
+                "https://api.bgm.tv/subject/{0}?responseGroup=large".
+                format(anime_id)
+            )
+            r = requests.get(url)
+            r.raise_for_status()
+            return [ep['id'] for ep in r.json()['eps']]
+
+        def get_watched_episodes(anime_id):
+            url = "https://api.bgm.tv/user/{0}/progress".format(self._uid)
+            params = {
+                'source': 'onAir',
+                'auth': self._auth,
+                'subject_id': anime_id
+            }
+            r = requests.get(url, params=params)
+            r.raise_for_status()
+            return [ep['id'] for ep in r.json()['eps']]
+
+        watched = get_watched_episodes(anime_item.id)
+        all_episodes = get_all_episodes(anime_item.id)
+        all_episodes.sort()
+        next_episode = next(
+            filter(lambda x: x not in watched, all_episodes), None
+        )
+        if next_episode is None:
+            return False
+        url = (
+            'https://api.bgm.tv/ep/'
+            '{0}/status/watched?source=onAir'.format(next_episode)
+        )
+        data = {'auth': self._auth}
+        r = requests.post(url, data=data)
+        r.raise_for_status()
+
+        result = r.json()
+        if result['code'] == 200:
+            return True
+        else:
+            return False
