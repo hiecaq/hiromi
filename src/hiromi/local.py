@@ -1,4 +1,4 @@
-import json
+import re
 from time import sleep
 
 from bgmal import AnimeItem, AnimeWebsite
@@ -25,34 +25,32 @@ class Hiromi(AnimeWebsite):
         """
         pass
 
+    @period_cache("local", period=1800)
+    def _get_bgm_and_mal_watchlist(self):
+        bgm = self._getBgm()
+        mal = self._getMal()
+        mal_animes = mal.watching_list()
+        bgm_animes = bgm.watching_list()
+        d = {'bgm': [], 'mal': [], 'failed': []}
+        for anime in mal_animes:
+            sleep(5)
+            try:
+                title = mal.search(anime.title).title
+                found = next(
+                    filter(lambda x: x.title[:-2] == title[:-2], bgm_animes)
+                )
+                if found is not None:
+                    d['bgm'].append(found)
+                    d['mal'].append(anime)
+            except Exception as e:
+                d['failed'].append(anime)
+
+        d['failed'] += set(bgm_animes) - set(d['bgm'])
+
+        return d
+
     def watching_list(self):
-        @period_cache("local", period=1800)
-        def from_scratch():
-            bgm = self._getBgm()
-            mal = self._getMal()
-            mal_animes = mal.watching_list()
-            bgm_animes = bgm.watching_list()
-            d = {'bgm': [], 'mal': [], 'failed': []}
-            for anime in mal_animes:
-                sleep(5)
-                try:
-                    title = mal.search(anime.title).title
-                    found = next(
-                        filter(
-                            lambda x: x.title[:-2] == title[:-2], bgm_animes
-                        )
-                    )
-                    if found is not None:
-                        d['bgm'].append(found)
-                        d['mal'].append(anime)
-                except Exception as e:
-                    d['failed'].append(anime)
-
-            d['failed'] += set(bgm_animes) - set(d['bgm'])
-
-            return d
-
-        result = from_scratch()
+        result = self._get_bgm_and_mal_watchlist()
         failed = result['failed'].copy()
         for index, bgm_anime in enumerate(result['bgm']):
             mal_anime = result['mal'][index]
@@ -93,3 +91,60 @@ class Hiromi(AnimeWebsite):
 
         """
         pass
+
+    def increment_status(self, anime_item):
+        """Mark the next episode of this given anime as watched.
+
+        :param AnimeItem anime_item: an AnimeItem that the user want to mark
+                                as watched.
+        :returns: true or false
+        :rtype: bool
+
+        """
+
+        def try_until_sucess(site, anime):
+            while True:
+                seceeded = site.increment_status(anime)
+                if seceeded:
+                    print(
+                        "sucessfully update episode "
+                        f"{anime.status + 1} of "
+                        f"{anime.title} as watched"
+                    )
+                    break
+                print(
+                    f"failed to update {anime.title}, "
+                    "wait 5 seconds to try again"
+                )
+                sleep(5)
+
+        def build_new_anime_item(anime):
+            unpack = anime._asdict()
+            unpack['status'] = unpack['status'] + 1
+            return AnimeItem(**unpack)
+
+        watching_list = self._get_bgm_and_mal_watchlist()
+        test = re.compile(anime_item.title, re.IGNORECASE)
+        for index, (bgm_anime, mal_anime) in enumerate(
+            zip(watching_list['bgm'], watching_list['mal'])
+        ):
+            if test.match(bgm_anime.title) or test.match(mal_anime.title):
+
+                try_until_sucess(self._getBgm(), bgm_anime)
+                try_until_sucess(self._getMal(), mal_anime)
+
+                @period_cache("local", period=0)
+                def new_result():
+                    """ A helper method that overwrite the cache"""
+                    result = watching_list.copy()
+                    result['bgm'][index] = build_new_anime_item(
+                        result['bgm'][index]
+                    )
+                    result['mal'][index] = build_new_anime_item(
+                        result['mal'][index]
+                    )
+                    return result
+
+                new_result()
+                return True
+        return False

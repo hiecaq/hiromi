@@ -18,6 +18,7 @@ from pkg_resources import get_distribution
 
 from .immigrate import add_parser_immigrate
 from .watchlist import add_parser_list
+from .update import add_parser_update
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ def parse_args(argv):
     subparsers = parser.add_subparsers()
     add_parser_immigrate(subparsers)
     add_parser_list(subparsers)
+    add_parser_update(subparsers)
     parser.add_argument(
         '-V',
         '--version',

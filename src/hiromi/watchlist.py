@@ -36,14 +36,6 @@ def add_parser_list(subparsers):
         default="local"
     )
     parser_list.add_argument(
-        '-o',
-        '--output',
-        metavar="SAVEFILE",
-        help="Save the failed AnimeItems to a file",
-        type=str,
-        default="save.json"
-    )
-    parser_list.add_argument(
         '--finished', help="Show the watched collection", action="store_true"
     )
 
