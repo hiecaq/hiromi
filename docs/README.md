@@ -4,7 +4,7 @@ hiromi
 Hiromi is a command line tool aiming at providing a convenient way to update anime watching status, potentially
 for multiple recording websites.
 
-[demo](https://i.imgur.com/rNDSAEB.gifv)
+![demo](https://i.imgur.com/rNDSAEB.gif "A demo showing the basic operation of hiromi")
 
 Usage
 --------------------
